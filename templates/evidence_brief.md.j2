@@ -1,0 +1,344 @@
+# Evidence Brief — Real-World Evidence Studio
+
+> **SYNTHETIC DATA ONLY.** {{ disclaimer }}
+
+---
+
+**Study run ID:** `{{ run_id }}`
+**Generated:** {{ generated_at }}
+**Application version:** {{ app_version }}
+
+---
+
+## 1. Title and Purpose
+
+**Real-World Evidence Studio — GLP-1 and Emergency Department Utilization**
+
+This document summarises a retrospective new-user cohort study applied to
+Synthea-generated synthetic EHR data. It is a portfolio and educational project.
+No finding represents real-world clinical evidence.
+
+---
+
+## 2. Clinical Question
+
+> Among synthetic adult patients with type 2 diabetes who initiate a GLP-1
+> receptor agonist therapy, what patient characteristics are associated with
+> emergency department (ED) utilization during the following follow-up period?
+
+---
+
+## 3. Data Source
+
+- **Source:** Synthea open-source synthetic patient generator
+- **Format:** CSV files ingested into a DuckDB analytical database
+- **Schema layers:** raw → standardized → analytics → audit
+- **Files loaded:**
+
+{% if manifest %}
+| File | Rows | SHA-256 (first 16) |
+|------|------|-------------------|
+{% for row in manifest %}| {{ row.get('file_name', '') }} | {{ row.get('row_count', '') }} | `{{ (row.get('sha256_hash', '') or '')[:16] }}…` |
+{% endfor %}
+{% else %}
+*Manifest not available.*
+{% endif %}
+
+---
+
+## 4. Synthetic Data Disclaimer
+
+> **Synthetic data only.** All results are derived from Synthea-generated
+> records. They do not represent real patients, clinical outcomes, treatment
+> effectiveness, drug safety, or incidence rates. This document must not be
+> used for clinical decisions, regulatory submissions, or public health reporting.
+
+---
+
+## 5. Study Design
+
+- **Design type:** Retrospective new-user cohort
+- **Observation type:** Associational; no causal inference is claimed
+- **Population:** Synthetic adult patients with type 2 diabetes initiating a GLP-1 receptor agonist
+- **Setting:** Synthea-generated EHR records (not claims data)
+
+---
+
+## 6. Index Date
+
+The index date is the **first observed GLP-1 receptor agonist medication start date**
+for each eligible patient. Only the first initiation within the observation period
+is used as the index event.
+
+---
+
+## 7. Inclusion and Exclusion Criteria
+
+**Inclusion criteria (all must be met):**
+
+1. Age ≥ {{ config.get('min_age_at_index', 18) }} years on the index date
+2. Evidence of type 2 diabetes on or before the index date
+3. ≥ {{ config.get('min_baseline_history_days', 365) }} days of observable history before the index date
+4. ≥ {{ config.get('min_follow_up_days', 180) }} days of observable follow-up after the index date (or until death)
+5. First GLP-1 initiation within the observation period
+
+**Exclusion criteria applied:**
+
+{% if config.get('exclude_type1_diabetes') %}- Type 1 diabetes (any record on or before index date)
+{% endif %}{% if config.get('exclude_gestational_diabetes') %}- Gestational diabetes (any record on or before index date)
+{% endif %}{% if config.get('exclude_pregnancy_at_index') %}- Pregnancy overlapping the index date (±30-day window)
+{% endif %}{% if config.get('exclude_missing_demographics') %}- Missing required demographics
+{% endif %}
+
+---
+
+## 8. Baseline and Follow-Up Windows
+
+| Window | Duration | Notes |
+|--------|----------|-------|
+| Baseline | {{ config.get('baseline_days', 365) }} days before index | Strictly < index date; no look-ahead |
+| Follow-up | {{ config.get('follow_up_days', 180) }} days after index | Censored at death or last encounter if earlier |
+
+---
+
+## 9. Exposure Definition
+
+**Exposure class:** GLP-1 receptor agonist (text-based concept matching)
+
+**Concept set members searched:**
+
+- semaglutide
+- liraglutide
+- dulaglutide
+- exenatide
+- tirzepatide
+
+Matching is case-insensitive substring search against Synthea medication
+description fields. This approach is not equivalent to validated phenotyping
+with an official vocabulary.
+
+---
+
+## 10. Outcome Definition
+
+**Primary outcome:** Any emergency department (ED) encounter during the
+{{ config.get('follow_up_days', 180) }}-day follow-up window.
+
+ED encounters are identified by `encounter_class = 'emergency'` in the
+standardized encounters table. This classification is derived from Synthea's
+simulation model and does not correspond to a validated CMS site-of-service
+definition.
+
+**Secondary outcome:** Any inpatient encounter during the follow-up window.
+
+---
+
+## 11. Covariates
+
+Baseline covariates are derived from data strictly **before** the index date
+(no look-ahead):
+
+| Covariate | Type | Source |
+|-----------|------|--------|
+| Age at index (years) | Continuous | Birth date + index date |
+| Age group (18-34, 35-49, 50-64, 65-74, 75+) | Categorical | Derived |
+| Sex | Categorical | standardized.patients |
+| Race | Categorical | standardized.patients |
+| Ethnicity | Categorical | standardized.patients |
+| GLP-1 drug initiated | Categorical | standardized.medications |
+| Baseline ED encounter count | Continuous | 365-day lookback |
+| Baseline inpatient encounter count | Continuous | 365-day lookback |
+| Baseline outpatient encounter count | Continuous | 365-day lookback |
+| Number of distinct conditions | Continuous | Ever on/before index |
+| Number of active medications | Continuous | Baseline window |
+| Hypertension (yes/no) | Binary | SNOMED text match |
+| Chronic kidney disease (yes/no) | Binary | SNOMED text match |
+| Cardiovascular disease (yes/no) | Binary | SNOMED text match |
+| Latest HbA1c (%) | Continuous | Baseline window; may be missing |
+| Latest BMI (kg/m²) | Continuous | Baseline window; may be missing |
+
+---
+
+## 12. Cohort Attrition
+
+{% if attrition %}
+| Step | Criterion | Patients remaining | Removed |
+|------|-----------|-------------------|---------|
+{% for row in attrition %}| {{ row.get('step_number', '') }} | {{ row.get('rule_label', '') }} | {{ row.get('patients_remaining', '') }} | {{ row.get('patients_removed', '') }} |
+{% endfor %}
+{% else %}
+*Attrition table not available.*
+{% endif %}
+
+**Final enrolled cohort:** {{ n_enrolled }} patients
+
+---
+
+## 13. Cohort Characteristics
+
+{% if characteristics %}
+| Characteristic | N (%) or Mean (SD) | Median [IQR] | Missing |
+|----------------|--------------------|--------------|---------|
+{% for row in characteristics %}| {{ row.get('Characteristic', '') }} | {{ row.get('N (%)  or  Mean (SD)', '') }} | {{ row.get('Median [IQR]', '') }} | {{ row.get('Missing', '') }} |
+{% endfor %}
+{% else %}
+*Characteristics table not available.*
+{% endif %}
+
+---
+
+## 14. Outcome Findings
+
+**Primary outcome: Any ED visit during follow-up**
+
+{% if outcomes %}
+{% for row in outcomes %}
+| Measure | Value |
+|---------|-------|
+| N patients enrolled | {{ row.get('n_patients', '—') }} |
+| Any ED visit — N (%) | {{ row.get('n_any_ed', '—') }} ({{ row.get('pct_any_ed', '—') }}%) |
+| Total ED encounters | {{ row.get('total_ed_encounters', '—') }} |
+| ED visits per 100 person-months | {{ row.get('ed_per_100_person_months', '—') }} |
+| Any inpatient visit — N (%) | {{ row.get('n_any_ip', '—') }} ({{ row.get('pct_any_ip', '—') }}%) |
+| Mean follow-up (days) | {{ row.get('mean_follow_up_days', '—') }} |
+{% endfor %}
+{% else %}
+*Outcome summary not available.*
+{% endif %}
+
+> All rates are from synthetic data and do not represent real-world incidence.
+
+---
+
+## 15. Subgroup Findings
+
+{% if subgroups %}
+{% for by_col, rows in subgroups.items() %}
+### By {{ by_col.replace('_', ' ').replace('has ', '').title() }}
+
+| Subgroup | N | N with ED | % ED | ED / 100 person-months |
+|----------|---|-----------|------|------------------------|
+{% for row in rows %}| {{ row.get('subgroup_value', '—') }} | {{ row.get('n', '—') }} | {{ row.get('n_ed', '—') }} | {{ row.get('pct_ed', '—') }}% | {{ row.get('ed_per_100_pm', '—') }} |
+{% endfor %}
+
+{% endfor %}
+{% else %}
+*Subgroup summaries not available.*
+{% endif %}
+
+> Subgroup comparisons are unadjusted and descriptive only.
+
+---
+
+## 16. Regression Results and Diagnostics
+
+{% if warnings %}
+**Model warnings:**
+{% for w in warnings %}
+- ⚠️ {{ w }}
+{% endfor %}
+{% endif %}
+
+{% if regression %}
+**Model:** Multivariable logistic regression (statsmodels `logit`)
+**Outcome:** Any ED visit during follow-up (binary)
+**Approach:** Complete-case analysis
+
+**n = {{ regression.n }}** | **Outcome events = {{ regression.events }}** | **AIC = {{ "%.1f" | format(regression.aic) }}**
+
+| Variable | OR | 95% CI lower | 95% CI upper | p-value | Note |
+|----------|----|-------------|-------------|---------|------|
+{% for row in regression.table %}| {{ row.get('Variable', '') }} | {{ row.get('OR', '') }} | {{ row.get('95% CI lower', '') }} | {{ row.get('95% CI upper', '') }} | {{ row.get('p-value', '') }} | {{ row.get('Unstable CI', '') }} |
+{% endfor %}
+
+> Odds ratios are associative and **non-causal**. They reflect patterns in
+> Synthea's simulation model, not real-world pharmacoepidemiology.
+{% else %}
+*Regression results not available. See warnings above.*
+{% endif %}
+
+---
+
+## 17. Missing Data Summary
+
+{% if missingness %}
+| Variable | N missing | % missing | Flag |
+|----------|-----------|-----------|------|
+{% for row in missingness %}| {{ row.get('Variable', '') }} | {{ row.get('N missing', '') }} | {{ row.get('% missing', '') }}% | {{ row.get('Flag', '') }} |
+{% endfor %}
+
+Complete-case logistic regression excludes all patients with any missing covariate.
+{% else %}
+*Missingness summary not available.*
+{% endif %}
+
+---
+
+## 18. Interpretation
+
+The following statements apply to synthetic data only:
+
+- The enrolled cohort comprises {{ n_enrolled }} synthetic adult patients with
+  type 2 diabetes who initiated a GLP-1 receptor agonist in the Synthea simulation.
+- {{ n_outcomes }} patients ({{ outcome_rate }}%) experienced at least one ED
+  encounter during the {{ config.get('follow_up_days', 180) }}-day follow-up window.
+- Baseline characteristics reflect Synthea's disease simulation model.
+- Observed associations between covariates and ED utilization reflect the simulation
+  logic rather than real clinical relationships.
+
+**No causal or clinical interpretation of these findings is appropriate.**
+
+---
+
+## 19. Limitations
+
+1. **Synthetic data.** Synthea contains simulated rather than observed patient records.
+2. **No real clinical finding.** Findings do not estimate real clinical incidence,
+   prevalence, effectiveness, or safety.
+3. **Concept-set validity.** Clinical concept sets are based on source-code or
+   description matching and may be incomplete or imprecise.
+4. **Observable-history proxy.** The 365-day observable history requirement uses
+   encounter presence as a proxy; it is not equivalent to continuous insurance enrollment.
+5. **Medication records.** Medication records may not represent actual dispensing,
+   adherence, or ingestion.
+6. **Residual confounding.** Unmeasured and unmeasurable confounders are not adjusted for.
+7. **Associative analysis only.** This analysis does not support causal conclusions.
+8. **Small synthetic subgroups.** Small subgroups may produce unstable estimates.
+9. **OMOP layer.** The partial OMOP-aligned layer is not a validated full OMOP CDM
+   conversion. All concept IDs are 0 (unmapped).
+10. **Single simulation run.** Results vary across Synthea random seeds.
+
+---
+
+## 20. Reproducibility Information
+
+| Item | Value |
+|------|-------|
+| Study run ID | `{{ run_id }}` |
+| Generated at (UTC) | {{ generated_at }} |
+| Application version | {{ app_version }} |
+| Follow-up days | {{ config.get('follow_up_days', '—') }} |
+| Baseline days | {{ config.get('baseline_days', '—') }} |
+| Min age at index | {{ config.get('min_age_at_index', '—') }} |
+| Exclude T1DM | {{ config.get('exclude_type1_diabetes', '—') }} |
+| Exclude gestational DM | {{ config.get('exclude_gestational_diabetes', '—') }} |
+| Exclude pregnancy | {{ config.get('exclude_pregnancy_at_index', '—') }} |
+| N enrolled | {{ n_enrolled }} |
+| N ED outcomes | {{ n_outcomes }} |
+
+To reproduce this analysis:
+
+```bash
+evidence-studio ingest --data-dir data/raw/
+evidence-studio build-cohort
+evidence-studio analyze
+evidence-studio export-brief --run-id {{ run_id }}
+```
+
+Verify source files using the SHA-256 hashes in Section 3.
+
+---
+
+*Real-World Evidence Studio — portfolio project. Not for clinical use.*
+*All patient records are synthetic. Results must not be used for clinical decisions,*
+*regulatory submissions, or public health reporting.*

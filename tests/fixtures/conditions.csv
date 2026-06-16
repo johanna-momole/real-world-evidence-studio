@@ -1,0 +1,8 @@
+START,STOP,PATIENT,ENCOUNTER,CODE,DESCRIPTION
+2008-05-01,,pt-0001,enc-0001,44054006,Diabetes mellitus type 2
+2012-03-15,,pt-0001,enc-0002,59621000,Essential hypertension
+2016-01-20,,pt-0002,enc-0004,44054006,Diabetes mellitus type 2
+2016-01-20,,pt-0002,enc-0004,59621000,Essential hypertension
+2003-07-12,,pt-0003,enc-0007,44054006,Diabetes mellitus type 2
+2017-11-05,,pt-0004,enc-0008,44054006,Diabetes mellitus type 2
+2020-06-30,,pt-0005,enc-0009,46635009,Type 1 diabetes mellitus

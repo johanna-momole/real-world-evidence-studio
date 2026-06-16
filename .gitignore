@@ -1,0 +1,59 @@
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+venv/
+env/
+
+# Synthea source files and generated outputs
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# DuckDB database files
+*.duckdb
+*.duckdb.wal
+
+# Legacy SQLite databases
+*.db
+*.sqlite
+
+# Parquet and Arrow outputs
+*.parquet
+*.arrow
+*.feather
+
+# Evidence-brief outputs
+output/
+briefs/*.md
+briefs/*.html
+!briefs/.gitkeep
+
+# Environment files
+.streamlit/secrets.toml
+.env
+
+# OS and editor artifacts
+.DS_Store
+Thumbs.db
+*.log
+
+# Screenshots (generated)
+screenshots/*.png
+screenshots/*.jpg
+
+# Build and packaging artifacts
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Pytest and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Ruff cache
+.ruff_cache/

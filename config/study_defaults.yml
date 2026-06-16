@@ -1,0 +1,17 @@
+# Default study parameters for the RWE Studio cohort.
+# All values are overridable from the Study Designer page.
+
+follow_up_days: 180          # Options: 30, 90, 180, 365
+baseline_days: 365
+
+min_age_at_index: 18
+
+# Configurable exclusions (set to false to keep the population)
+exclude_type1_diabetes: true
+exclude_gestational_diabetes: true
+exclude_pregnancy_at_index: true
+exclude_missing_demographics: false
+
+# Minimum observation periods (days)
+min_baseline_history_days: 365
+min_follow_up_days: 180      # Updated when follow_up_days changes

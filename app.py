@@ -1,0 +1,60 @@
+"""Real-World Evidence Studio — Streamlit application entry point."""
+
+from __future__ import annotations
+
+import streamlit as st
+
+st.set_page_config(
+    page_title="Real-World Evidence Studio",
+    page_icon="🏥",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={
+        "About": (
+            "**Real-World Evidence Studio** — synthetic EHR analytics portfolio. "
+            "All data is Synthea-generated. Results do not represent real patients "
+            "or clinical outcomes."
+        )
+    },
+)
+
+from evidence_studio.config import AppConfig  # noqa: E402
+from evidence_studio.ui.components import render_sidebar  # noqa: E402
+from evidence_studio.ui.pages import (  # noqa: E402
+    cohort_attrition,
+    data_quality,
+    evidence_brief,
+    methodology,
+    overview,
+    results,
+    sql_audit,
+    study_designer,
+)
+
+_cfg = AppConfig()
+render_sidebar(db_exists=_cfg.resolved_db_path.exists())
+
+pg = st.navigation(
+    {
+        "Data": [
+            st.Page(overview.show, title="Overview", icon="🏠", default=True),
+            st.Page(data_quality.show, title="Data Quality", icon="🔍"),
+        ],
+        "Study": [
+            st.Page(study_designer.show, title="Study Designer", icon="⚙️"),
+            st.Page(cohort_attrition.show, title="Cohort Attrition", icon="📊"),
+        ],
+        "Analysis": [
+            st.Page(results.show, title="Results", icon="📈"),
+        ],
+        "Outputs": [
+            st.Page(sql_audit.show, title="SQL & Audit Trail", icon="🔎"),
+            st.Page(evidence_brief.show, title="Evidence Brief", icon="📄"),
+        ],
+        "Documentation": [
+            st.Page(methodology.show, title="Methodology & Limitations", icon="📚"),
+        ],
+    }
+)
+
+pg.run()

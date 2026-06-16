@@ -1,0 +1,6 @@
+START,STOP,PATIENT,PAYER,ENCOUNTER,CODE,BASE_COST,PAYER_COVERAGE,DISPENSES,TOTALCOST,REASONCODE,REASONDESCRIPTION,DESCRIPTION
+2019-02-10,,pt-0001,pyr-01,enc-0002,897122,14.38,11.50,1,14.38,44054006,Diabetes mellitus type 2,Semaglutide 0.5 MG/ML [Ozempic]
+2019-03-01,,pt-0001,pyr-01,enc-0002,897122,14.38,11.50,1,14.38,44054006,Diabetes mellitus type 2,Semaglutide 0.5 MG/ML [Ozempic]
+2017-05-15,,pt-0002,pyr-02,enc-0005,1860487,14.38,0.00,1,14.38,44054006,Diabetes mellitus type 2,Dulaglutide 1.5 MG/0.5 ML [Trulicity]
+2005-08-20,,pt-0003,pyr-01,enc-0007,3992,5.20,4.16,1,5.20,44054006,Diabetes mellitus type 2,Metformin hydrochloride 500 MG [Glucophage]
+2020-01-15,,pt-0004,pyr-03,enc-0008,2200739,14.38,10.07,1,14.38,44054006,Diabetes mellitus type 2,liraglutide 6 MG/ML [Victoza]

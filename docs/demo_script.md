@@ -1,0 +1,111 @@
+# Demo Script — 3-Minute Portfolio Walkthrough
+
+This script guides a live portfolio demonstration for an interviewer or reviewer.
+Assumes the app is already running (`streamlit run app.py`) with Synthea data
+ingested and a cohort built.
+
+---
+
+## Setup (before the demo)
+
+```bash
+evidence-studio ingest --data-dir data/raw/
+evidence-studio build-cohort
+evidence-studio analyze
+streamlit run app.py
+```
+
+Open the browser to `http://localhost:8501`.
+
+---
+
+## Minute 1 — Clinical question and data provenance
+
+**Open: Overview page**
+
+> "This project answers a real-world evidence question: among patients with
+> type 2 diabetes who start a GLP-1 therapy, what predicts an emergency
+> department visit in the next 180 days?"
+
+Point to the data source status panel:
+
+> "The source data is Synthea — an open-source EHR simulator. The app shows
+> the exact files loaded, row counts, and SHA-256 hashes so the analysis is
+> fully reproducible from a documented starting point."
+
+**Open: Data Quality page**
+
+> "Before I touch the cohort, I run 18 data quality rules — nullability,
+> referential integrity, date ordering, plausibility. Every failure is
+> recorded with a count and a rule label. This is infrastructure I built to
+> catch Synthea quirks early rather than discovering them in the regression."
+
+---
+
+## Minute 2 — Cohort construction and transparency
+
+**Open: Study Designer page**
+
+> "The cohort criteria are fully configurable: follow-up window, minimum
+> observation period, exclusion toggles. When I hit 'Build cohort', the app
+> runs a stepwise SQL attrition cascade and records every step."
+
+**Open: Cohort Attrition page**
+
+> "This waterfall shows exactly how many patients were removed at each step
+> and why. The final cohort size here is [N]. This is the kind of
+> transparency that separates a reproducible study from an ad hoc analysis."
+
+Point to the run ID displayed in the sidebar:
+
+> "Every run has a unique ID derived from the config hash and timestamp. I
+> can regenerate the exact same cohort from the same config and the same
+> Synthea files."
+
+---
+
+## Minute 3 — Results, regression, and the evidence brief
+
+**Open: Results page → Regression tab**
+
+> "The primary analysis is a multivariable logistic regression. This forest
+> plot shows adjusted odds ratios with 95% confidence intervals. The model
+> flags small-sample warnings automatically — so I'm not hiding the fact
+> that a synthetic dataset of this size doesn't support strong inference."
+
+**Open: Evidence Brief page → click Download**
+
+> "The app generates a structured evidence brief in Markdown and HTML. It
+> includes all 20 sections required by a real RWE study report: clinical
+> question, data source, cohort definition, attrition, characteristics,
+> outcomes, subgroups, regression, missingness, limitations, and a
+> reproducibility block with the exact run ID and file hashes."
+
+Pause.
+
+> "What I want this project to demonstrate is not that GLP-1s reduce ED
+> visits — that would be a meaningless claim on synthetic data. What it
+> demonstrates is that I know how to build the infrastructure for a
+> transparent, auditable, reproducible observational study: from raw EHR
+> files to a documented evidence report."
+
+---
+
+## Follow-up questions to anticipate
+
+**"Why DuckDB and not Postgres?"**
+> In-process, no server, native CSV ingestion, columnar for analytics, and
+> it runs identically on any laptop — perfect for a local portfolio demo.
+> The architecture doc lists Postgres as a future enhancement for a shared
+> environment.
+
+**"How would this handle real patient data?"**
+> The app itself is production-capable in structure: parameterized SQL,
+> no hardcoded paths, audit trail, config-driven criteria. Real data would
+> require IRB approval, de-identification verification, and cloud
+> infrastructure I've documented in the roadmap.
+
+**"What's the limitation you're most worried about?"**
+> Confounding. A new-user cohort is appropriate, but Synthea's simulated
+> prescribing patterns don't fully replicate channeling bias in real T2DM
+> patients. The limitations page documents this and more.

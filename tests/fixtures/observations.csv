@@ -1,0 +1,9 @@
+DATE,PATIENT,ENCOUNTER,CODE,DESCRIPTION,VALUE,UNITS,TYPE
+2018-06-20,pt-0001,enc-0002,4548-4,Hemoglobin A1c/Hemoglobin.total in Blood,7.8,%,numeric
+2018-06-20,pt-0001,enc-0002,39156-5,Body mass index (BMI) [Ratio],31.2,kg/m2,numeric
+2019-08-22,pt-0002,enc-0005,4548-4,Hemoglobin A1c/Hemoglobin.total in Blood,8.4,%,numeric
+2019-08-22,pt-0002,enc-0005,39156-5,Body mass index (BMI) [Ratio],28.5,kg/m2,numeric
+2005-04-12,pt-0003,enc-0007,4548-4,Hemoglobin A1c/Hemoglobin.total in Blood,9.1,%,numeric
+2019-07-15,pt-0004,enc-0008,4548-4,Hemoglobin A1c/Hemoglobin.total in Blood,7.2,%,numeric
+2019-07-15,pt-0004,enc-0008,39156-5,Body mass index (BMI) [Ratio],26.8,kg/m2,numeric
+2021-01-10,pt-0005,enc-0009,4548-4,Hemoglobin A1c/Hemoglobin.total in Blood,6.8,%,numeric

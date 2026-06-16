@@ -1,0 +1,130 @@
+# Concept set definitions for the RWE Studio.
+#
+# Each concept set specifies a domain and one or more search strategies.
+# text_search: case-insensitive substring match against source description.
+# code_search: exact match against source code field.
+#
+# These are initial definitions; the Study Designer page shows which terms
+# actually matched records in the loaded Synthea files. No match is
+# claimed to be a validated clinical phenotype.
+
+glp1_medications:
+  domain: medications
+  description: "GLP-1 receptor agonists (and dual GIP/GLP-1 agonists)"
+  text_search:
+    - semaglutide
+    - liraglutide
+    - dulaglutide
+    - exenatide
+    - tirzepatide
+
+type2_diabetes:
+  domain: conditions
+  description: "Type 2 diabetes mellitus"
+  text_search:
+    - "type 2 diabetes mellitus"
+    - "type 2 diabetes"
+    - "diabetes mellitus type 2"
+    - "non-insulin-dependent diabetes mellitus"
+    - "niddm"
+  code_search:
+    - "44054006"    # SNOMED: Type 2 diabetes mellitus
+
+type1_diabetes:
+  domain: conditions
+  description: "Type 1 diabetes mellitus (exclusion)"
+  text_search:
+    - "type 1 diabetes mellitus"
+    - "type 1 diabetes"
+    - "diabetes mellitus type 1"
+    - "insulin-dependent diabetes mellitus"
+    - "iddm"
+    - "juvenile diabetes"
+  code_search:
+    - "46635009"    # SNOMED: Type 1 diabetes mellitus
+
+gestational_diabetes:
+  domain: conditions
+  description: "Gestational diabetes mellitus (exclusion)"
+  text_search:
+    - "gestational diabetes"
+    - "diabetes mellitus in pregnancy"
+    - "diabetes mellitus complicating pregnancy"
+  code_search:
+    - "11687002"    # SNOMED: Gestational diabetes mellitus
+
+pregnancy:
+  domain: conditions
+  description: "Pregnancy (exclusion — conditions overlapping index date)"
+  text_search:
+    - "pregnancy"
+    - "pregnant"
+    - "antepartum"
+    - "prenatal"
+    - "gravid"
+  code_search:
+    - "77386006"    # SNOMED: Pregnant
+
+hypertension:
+  domain: conditions
+  description: "Hypertension (baseline comorbidity)"
+  text_search:
+    - "hypertension"
+    - "high blood pressure"
+    - "elevated blood pressure"
+  code_search:
+    - "59621000"    # SNOMED: Essential hypertension
+    - "38341003"    # SNOMED: Hypertension
+
+chronic_kidney_disease:
+  domain: conditions
+  description: "Chronic kidney disease (baseline comorbidity)"
+  text_search:
+    - "chronic kidney disease"
+    - "chronic renal failure"
+    - "chronic renal insufficiency"
+    - "ckd"
+    - "end stage renal disease"
+    - "esrd"
+  code_search:
+    - "709044004"   # SNOMED: Chronic kidney disease
+    - "431857002"   # SNOMED: Chronic kidney disease stage 1
+
+cardiovascular_disease:
+  domain: conditions
+  description: "Cardiovascular disease (baseline comorbidity)"
+  text_search:
+    - "coronary artery disease"
+    - "ischemic heart disease"
+    - "heart failure"
+    - "myocardial infarction"
+    - "stroke"
+    - "cerebrovascular accident"
+    - "atrial fibrillation"
+    - "peripheral vascular disease"
+    - "peripheral arterial disease"
+  code_search:
+    - "53741008"    # SNOMED: Coronary arteriosclerosis
+    - "22298006"    # SNOMED: Myocardial infarction
+    - "230690007"   # SNOMED: Stroke
+
+bmi:
+  domain: observations
+  description: "Body mass index"
+  text_search:
+    - "body mass index"
+    - "bmi"
+  code_search:
+    - "39156-5"     # LOINC: BMI
+
+hba1c:
+  domain: observations
+  description: "Hemoglobin A1c"
+  text_search:
+    - "hemoglobin a1c"
+    - "hba1c"
+    - "glycated hemoglobin"
+    - "glycohemoglobin"
+  code_search:
+    - "4548-4"      # LOINC: HbA1c (IFCC)
+    - "17856-6"     # LOINC: HbA1c/Hemoglobin.total
