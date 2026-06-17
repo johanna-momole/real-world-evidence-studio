@@ -1,9 +1,9 @@
 # Real-World Evidence Studio
 
-> **Synthetic data only.** All results are derived from Synthea-generated
-> synthetic records. They do not represent real patients, clinical outcomes,
-> treatment effectiveness, drug safety, or incidence rates. This project must
-> not be used for clinical decisions, regulatory submissions, or public health
+> **Synthetic data only.** All results are derived from synthetic records.
+> They do not represent real patients, clinical outcomes, treatment
+> effectiveness, drug safety, or incidence rates. This project must not be
+> used for clinical decisions, regulatory submissions, or public health
 > reporting.
 
 A portfolio-grade, local Streamlit application that demonstrates transparent
@@ -23,7 +23,7 @@ real-world evidence (RWE) generation from synthetic EHR data.
 
 ```mermaid
 flowchart TD
-    A[Synthea CSV Files] --> B[ingestion.py\nraw schema]
+    A[Source CSV Files] --> B[ingestion.py\nraw schema]
     B --> C[standardized schema\nclean · cast · validate]
     C --> D[cohort.py\nGLP-1 index events\nattrition cascade]
     D --> E[analytics schema\nbaseline features · outcomes]
@@ -90,7 +90,7 @@ timeline
 |-------|-----------|
 | Language | Python 3.11+ |
 | Analytical DB | DuckDB (in-process, file-backed) |
-| Source data | Synthea synthetic CSVs |
+| Source data | Synthea-compatible synthetic CSVs (see `docs/data_setup.md`) |
 | Query language | SQL (primary logic layer) |
 | App framework | Streamlit (`st.Page` / `st.navigation`) |
 | Charts | Plotly |
@@ -121,11 +121,17 @@ source .venv/bin/activate
 # 3. Install with development dependencies
 pip install -e ".[dev]"
 
-# 4. Obtain Synthea data (see docs/data_setup.md)
+# 4. Obtain source data — two options (see docs/data_setup.md):
+#    Option A: Official Synthea (preferred) — requires Java 11+
+#    Option B: Bundled custom demo generator (no Java required)
+#      python scripts/generate_demo_data.py --output-dir data/raw/
 # Place CSVs in:  data/raw/
 
 # 5. Run the full pipeline
-evidence-studio ingest --data-dir data/raw/
+# For Synthea data:
+evidence-studio ingest --data-dir data/raw/ --data-source official_synthea
+# For custom demo data:
+# evidence-studio ingest --data-dir data/raw/ --data-source custom_synthetic_demo
 evidence-studio dq-report
 evidence-studio build-cohort
 evidence-studio analyze
@@ -142,14 +148,37 @@ streamlit run app.py
 ```
 
 The app handles missing data gracefully — every page displays a setup guide
-when DuckDB or Synthea files are not yet present.
+when DuckDB or source files are not yet present.
+
+---
+
+## Data sources
+
+This project supports two data modes. Both produce Synthea-compatible CSV files
+and pass the same ingestion pipeline; they differ in provenance and fidelity.
+
+| Mode | How to obtain | `--data-source` flag | When to use |
+|------|--------------|----------------------|-------------|
+| **Official Synthea** (preferred) | `java -jar synthea.jar -p 2000` | `official_synthea` | Realistic disease module outputs; requires Java 11+ |
+| **Custom demo generator** | `python scripts/generate_demo_data.py` | `custom_synthetic_demo` | Local validation without Java; not epidemiologically representative |
+
+**Important:** The custom demo generator exists to exercise application code
+paths without requiring Java. It uses hard-coded demonstration probabilities
+that do **not** reproduce Synthea's disease modules, clinical logic, prevalence
+rates, prescribing patterns, or outcome distributions. Passing all 18
+data-quality checks confirms structural consistency only — it does **not**
+validate clinical realism.
+
+Demo cohort sizes, ED rates, subgroup findings, and regression coefficients
+produced from the custom generator are not scientific findings and must not
+be presented as expected or representative results.
 
 ---
 
 ## Running tests
 
 ```bash
-# Run all tests (uses only tests/fixtures/ — no Synthea download needed)
+# Run all tests (no source data download needed)
 pytest
 
 # With verbose output

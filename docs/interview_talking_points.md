@@ -88,12 +88,18 @@ interviews. Grouped by topic.
 - `concept_id = 0` when no proper OMOP concept ID has been mapped
 - Limitations documented in `docs/omop_mapping.md`; not claimed as validated CDM
 
-**"What are the limitations of using Synthea?"**
+**"What are the limitations of the synthetic data?"**
 - Simulated data reflects the simulator's coding patterns, not real-world
   prescribing behavior or coding variability
 - No real channeling bias, no real missing data mechanisms
 - Drug descriptions are standardized text, not real NDC codes or RxNorm
 - Results cannot be used for any regulatory, clinical, or public health purpose
+- The project supports two data modes: official Synthea (preferred, more
+  realistic disease modules) and a bundled custom Python generator (no Java
+  required, but uses simplified demonstration probabilities only)
+- The custom generator does not reproduce Synthea's disease prevalences,
+  prescribing logic, or clinical transitions — it exercises application code
+  paths and should not be used to draw any clinical conclusions
 - Full list in `docs/limitations.md`
 
 ---

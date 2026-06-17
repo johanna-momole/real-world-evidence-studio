@@ -177,12 +177,15 @@ def fit_ed_logistic_regression(conn: duckdb.DuckDBPyConnection) -> RegressionRes
                     f"Predictor '{col}' has zero variance and was dropped from the model."
                 )
 
-        if model_df["sex"].nunique() > 1:
-            formula_parts.append("C(sex)")
-        if model_df["race"].nunique() > 1:
-            formula_parts.append("C(race)")
-        if model_df["ethnicity"].nunique() > 1:
-            formula_parts.append("C(ethnicity)")
+        for cat_col in ("sex", "race", "ethnicity"):
+            n_levels = model_df[cat_col].nunique() if cat_col in model_df.columns else 0
+            if n_levels > 1:
+                formula_parts.append(f"C({cat_col})")
+            elif cat_col in model_df.columns:
+                result.warnings.append(
+                    f"Predictor '{cat_col}' excluded: fewer than 2 usable levels "
+                    "after filtering (zero variance in complete-case sample)."
+                )
 
         if not formula_parts:
             result.model_not_fit = True

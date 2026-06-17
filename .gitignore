@@ -27,6 +27,7 @@ data/processed/*
 
 # Evidence-brief outputs
 output/
+evidence_output/
 briefs/*.md
 briefs/*.html
 !briefs/.gitkeep

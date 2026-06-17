@@ -161,7 +161,7 @@ def _render_manifest(conn) -> None:
 
     df = run_query(
         conn,
-        "SELECT file_name, row_count, file_size_bytes, sha256_hash, load_timestamp "
+        "SELECT file_name, row_count, file_size_bytes, sha256_hash, data_source, load_timestamp "
         "FROM audit.data_manifest ORDER BY load_timestamp DESC",
     )
     if df.empty:

@@ -66,7 +66,7 @@ Rules:
 - No mocking of DuckDB — use real connections against `tmp_path` databases.
 - Test the empty-database case for every new analysis or UI function.
 - Tiny synthetic CSV rows may be added to `tests/fixtures/`.
-- Full Synthea datasets and `.duckdb` files must never be committed.
+- Full generated datasets and `.duckdb` files must never be committed.
 
 ---
 
@@ -84,10 +84,10 @@ Rules:
 Any new output surface (page, download, export) must carry the mandatory disclaimer:
 
 > **Synthetic data only.** All results in this application are derived from
-> Synthea-generated synthetic records. They do not represent real patients,
-> clinical outcomes, treatment effectiveness, drug safety, or incidence rates.
-> This project must not be used for clinical decisions, regulatory submissions,
-> or public health reporting.
+> synthetic records. They do not represent real patients, clinical outcomes,
+> treatment effectiveness, drug safety, or incidence rates. This project must
+> not be used for clinical decisions, regulatory submissions, or public health
+> reporting.
 
 ---
 
@@ -110,5 +110,5 @@ Test: add empty-DB case for missingness_summary
 - [ ] `pytest tests/ -v` passes
 - [ ] New public functions have type hints and a one-line docstring
 - [ ] New output surfaces carry the synthetic-data disclaimer
-- [ ] No Synthea CSVs, `.duckdb` files, or secrets committed
+- [ ] No generated data CSVs, `.duckdb` files, or secrets committed
 - [ ] `CONTRIBUTING.md` or `docs/future_roadmap.md` updated if relevant

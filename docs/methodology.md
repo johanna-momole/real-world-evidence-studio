@@ -1,10 +1,10 @@
 # Methodology — Real-World Evidence Studio
 
 > **Synthetic data disclaimer.** All findings in this application are derived
-> from Synthea-generated synthetic records. They do not represent real patients,
-> clinical outcomes, treatment effectiveness, drug safety, or incidence rates.
-> This document describes a study design applied to synthetic data for
-> portfolio and educational purposes only.
+> from synthetic records. They do not represent real patients, clinical outcomes,
+> treatment effectiveness, drug safety, or incidence rates. This document
+> describes a study design applied to synthetic data for portfolio and
+> educational purposes only.
 
 ---
 
@@ -24,12 +24,15 @@ relationships between GLP-1 therapy and ED outcomes.
 
 **Design:** Retrospective new-user cohort study applied to synthetic EHR data.
 
-**Data source:** Synthea open-source synthetic patient generator output (CSV
-format). Synthea simulates longitudinal EHR records including demographics,
-conditions, medications, encounters, observations, and procedures.
+**Data source:** Synthetic EHR data in Synthea-compatible CSV format. Two data
+modes are supported — official Synthea output (preferred) and the bundled custom
+demo generator (`scripts/generate_demo_data.py`). The custom demo generator uses
+simplified demonstration logic and does not reproduce Synthea's disease modules,
+clinical transitions, or epidemiological distributions. The evidence brief records
+which source was used for each study run. See `docs/data_setup.md` for details.
 
 **Observation period:** Defined by the earliest and latest dates present in the
-loaded Synthea files. No data outside the available Synthea time range is used
+loaded source files. No data outside the available observation range is used
 or imputed.
 
 ---
@@ -43,7 +46,7 @@ GLP-1 receptor agonists (glucagon-like peptide-1 receptor agonists).
 ### 3.2 Concept set
 
 The application inspects the actual medication descriptions and source codes
-present in the loaded Synthea files. The following drug names are used as
+present in the loaded source files. The following drug names are used as
 case-insensitive substring search terms:
 
 | Search term | Notes |
@@ -110,7 +113,7 @@ the index date enters baseline feature construction.
 |---------|-------------|-------|
 | Age | `patients.birthdate` | Calculated at index date |
 | Age group | Derived | 18–34, 35–49, 50–64, 65–74, 75+ |
-| Sex | `patients.gender` | Recorded value in Synthea; not imputed |
+| Sex | `patients.gender` | Recorded value in source data; not imputed |
 | Race | `patients.race` | Recorded value; missingness flagged |
 | Ethnicity | `patients.ethnicity` | Recorded value; missingness flagged |
 
@@ -163,7 +166,7 @@ triggers a full cohort rebuild because the minimum follow-up eligibility
 criterion references the selected window length.
 
 Follow-up is censored at the earlier of: the end of the window, death, or the
-last available record date in the Synthea data.
+last available record date in the source data.
 
 ### 6.2 Primary outcome
 
@@ -259,11 +262,12 @@ Each cohort build records to `audit.study_runs`:
 - Timestamp
 - Study configuration (JSON-serialised `StudyConfig`)
 - DuckDB file path and schema version
-- Synthea file manifest (names, row counts, load timestamps)
+- Data source identifier (`official_synthea`, `custom_synthetic_demo`, or `unknown_synthetic_source`)
+- Source file manifest (names, row counts, SHA-256 hashes, load timestamps)
 - All assumption log entries for the run
 
 A saved run configuration can be reloaded via the Study Designer to reproduce
-the exact cohort from the same Synthea data.
+the exact cohort from the same source data.
 
 ---
 
@@ -271,19 +275,22 @@ the exact cohort from the same Synthea data.
 
 See [limitations.md](limitations.md) for the full discussion. Key points:
 
-1. **Synthea data** does not reflect real clinical populations; all associations
-   are artefacts of the simulation model.
-2. **New-user design** assumes the first GLP-1 record in Synthea is truly a
-   new initiation; prior exposure before the Synthea observation window cannot
-   be detected.
+1. **Synthetic data** does not reflect real clinical populations; all associations
+   are artefacts of the simulation model and do not represent real findings.
+2. **New-user design** assumes the first GLP-1 record is truly a new initiation;
+   prior exposure before the observation window cannot be detected.
 3. **Complete-case analysis** excludes patients with missing covariates;
-   missingness in Synthea is not missing at random in the same way as real EHR data.
+   missingness in synthetic data is not missing at random in the same way as
+   real EHR data.
 4. **No confounding adjustment beyond regression**; unmeasured confounders
    (patient preferences, provider prescribing patterns) are not modelled.
-5. **Encounter-class classification** in Synthea may not perfectly align with
-   CMS site-of-service definitions used in real RWE studies.
+5. **Encounter-class classification** may not perfectly align with CMS
+   site-of-service definitions used in real RWE studies.
 6. **No competing risks** analysis; death is treated as administrative censoring.
 7. **OMOP layer** uses concept ID 0 for unmapped codes; it is illustrative only.
+8. **Custom demo generator** (if used): additionally limited by simplified
+   demographic and disease distributions that do not reproduce Synthea's
+   disease modules or any real-world epidemiology.
 
 ---
 

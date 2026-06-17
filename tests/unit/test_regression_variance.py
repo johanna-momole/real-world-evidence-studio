@@ -129,8 +129,8 @@ def test_multiple_constant_predictors_each_warned(tmp_path: Path) -> None:
     assert not result.model_not_fit, f"Model should still fit. Warnings: {result.warnings}"
 
 
-def test_categorical_single_level_excluded_not_warned_as_variance(tmp_path: Path) -> None:
-    """Categorical with one observed level is excluded from formula; no numeric-variance warning."""
+def test_categorical_single_level_excluded_not_warned_as_numeric_variance(tmp_path: Path) -> None:
+    """Categorical with one level emits a named warning but NOT the numeric zero-variance message."""
     from evidence_studio.statistics import fit_ed_logistic_regression
 
     df = _build_df(sex="m")  # only "m" — C(sex) must not appear in formula
@@ -139,10 +139,10 @@ def test_categorical_single_level_excluded_not_warned_as_variance(tmp_path: Path
     conn.close()
 
     assert not result.model_not_fit, f"Model should fit without C(sex). Warnings: {result.warnings}"
-    # Categorical exclusion is silent in the current implementation; not a numeric-variance warning
-    assert not any("sex" in w and "zero variance" in w for w in result.warnings), (
-        "sex must not appear in a 'zero variance' warning — it is handled separately"
-    )
+    # sex must not appear in the NUMERIC zero-variance warning ("has zero variance and was dropped")
+    assert not any(
+        "sex" in w and "has zero variance and was dropped" in w for w in result.warnings
+    ), "sex must not appear in the numeric zero-variance warning — it is handled as a categorical"
 
 
 def test_all_predictors_constant_returns_unfitted(tmp_path: Path) -> None:

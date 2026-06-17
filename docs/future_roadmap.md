@@ -54,8 +54,12 @@ Provide a `Dockerfile` and `docker-compose.yml` so the full app (DuckDB,
 Streamlit, Synthea data volume) runs with `docker compose up`.
 
 ### 10. Automated Synthea data generation
-Add a `scripts/generate_synthea.sh` wrapper that downloads the Synthea JAR,
-runs a configurable patient generation, and places output in `data/raw/`.
+The bundled `scripts/generate_demo_data.py` (Option B) already provides a
+no-Java path for local demos. The remaining enhancement is a
+`scripts/generate_synthea.sh` wrapper that downloads the official Synthea JAR,
+runs a configurable patient generation, and places Option A output in `data/raw/`.
+This would allow fully automated pipeline validation against Synthea's disease
+modules without a manual Synthea install.
 
 ---
 

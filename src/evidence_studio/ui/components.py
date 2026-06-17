@@ -8,9 +8,9 @@ import pandas as pd
 import streamlit as st
 
 DISCLAIMER = (
-    "> **Synthetic data only.** All results are derived from Synthea-generated "
-    "synthetic records. They do not represent real patients, clinical outcomes, "
-    "treatment effectiveness, drug safety, or incidence rates. This project must "
+    "> **Synthetic data only.** All results are derived from synthetic records. "
+    "They do not represent real patients, clinical outcomes, treatment "
+    "effectiveness, drug safety, or incidence rates. This project must "
     "not be used for clinical decisions, regulatory submissions, or public health "
     "reporting."
 )
@@ -19,21 +19,21 @@ DISCLAIMER = (
 def show_disclaimer() -> None:
     """Render the mandatory synthetic-data disclaimer."""
     st.info(
-        "**Synthetic data only.** All results are derived from Synthea-generated "
-        "records. They do not represent real patients or clinical outcomes and must "
+        "**Synthetic data only.** All results are derived from synthetic records. "
+        "They do not represent real patients or clinical outcomes and must "
         "not be used for clinical decisions or public health reporting.",
         icon="⚠️",
     )
 
 
 def no_data_banner(page_hint: str = "") -> None:
-    """Render a banner directing the user to load Synthea data."""
+    """Render a banner directing the user to load source data."""
     st.warning(
-        "**No Synthea data loaded.** "
+        "**No source data loaded.** "
         f"{page_hint + ' ' if page_hint else ''}"
-        "Place Synthea CSV files in `data/raw/` then use the CLI or the "
+        "Place source CSV files in `data/raw/` then use the CLI or the "
         "ingestion step to load them into the database. "
-        "See [docs/data_setup.md](docs/data_setup.md) for instructions.",
+        "See [docs/data_setup.md](docs/data_setup.md) for setup instructions.",
         icon="📂",
     )
 

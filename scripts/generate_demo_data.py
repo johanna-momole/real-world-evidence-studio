@@ -30,10 +30,19 @@ from datetime import date, timedelta
 from pathlib import Path
 
 # ── Reference data ────────────────────────────────────────────────────────────
+#
+# DEMONSTRATION ASSUMPTIONS — NOT EPIDEMIOLOGICAL ESTIMATES
+# All weights, probabilities, and counts below are chosen to produce plausible-
+# looking CSV structure and non-trivial application behaviour.  They are NOT
+# derived from census data, clinical guidelines, or any validated epidemiological
+# source.  Do not interpret them as estimates of real-world prevalence,
+# incidence, prescribing rates, or demographic distributions.
 
 RACES = ["white", "black", "asian", "other", "native"]
+# Demonstration weights only — not calibrated to any census or survey estimate.
 RACE_W = [0.60, 0.18, 0.10, 0.08, 0.04]
 ETHNICITIES = ["nonhispanic", "hispanic"]
+# Demonstration weights only — not calibrated to any census or survey estimate.
 ETHNICITY_W = [0.82, 0.18]
 GENDERS = ["M", "F"]
 FIRST_M = [
@@ -297,7 +306,13 @@ class _Generator:
     # ── Patient builders ──────────────────────────────────────────────────────
 
     def build_enrolled(self, index_date: date, birth_date: date) -> str:
-        """Patient that passes every inclusion/exclusion criterion."""
+        """Patient that passes every inclusion/exclusion criterion.
+
+        All probabilities in this method are demonstration assumptions chosen to
+        exercise multiple application code paths (comorbidity flags, regression
+        predictors, baseline ED history).  They are NOT clinical prevalence
+        estimates and must not be interpreted as such.
+        """
         pid = self._uid()
         self.add_patient(pid, birth_date)
 
@@ -305,8 +320,10 @@ class _Generator:
         bl_enc_id = self.add_encounter(pid, t2dm_date, random.choice(ENC_AMBA))
         self.add_condition(pid, bl_enc_id, t2dm_date, C_T2DM)
 
+        # 70% obesity co-occurrence — demonstration assumption, not a prevalence estimate.
         if random.random() < 0.70:
             self.add_condition(pid, bl_enc_id, t2dm_date, C_OBE)
+        # 80% prior DM medication — demonstration assumption.
         if random.random() < 0.80:
             self.add_medication(
                 pid,
@@ -333,7 +350,9 @@ class _Generator:
                 self.add_observation(pid, enc_id, visit, OBS_SBP, float(random.randint(120, 165)))
             visit += timedelta(days=90)
 
-        if random.random() < 0.55:
+        # Comorbidity probabilities below are demonstration assumptions, not
+        # calibrated prevalence estimates for any T2DM population.
+        if random.random() < 0.55:  # HTN — demonstration assumption
             htn_date = self._jitter(t2dm_date, 0, (index_date - t2dm_date).days)
             htn_enc_id = self.add_encounter(pid, htn_date, random.choice(ENC_AMBA))
             self.add_condition(pid, htn_enc_id, htn_date, C_HTN)
@@ -345,11 +364,11 @@ class _Generator:
                 reason_code=C_HTN[0],
                 reason_desc=C_HTN[1],
             )
-        if random.random() < 0.20:
+        if random.random() < 0.20:  # CKD — demonstration assumption
             ckd_date = self._jitter(t2dm_date, 180, min(730, (index_date - t2dm_date).days))
             ckd_enc_id = self.add_encounter(pid, ckd_date, random.choice(ENC_AMBA))
             self.add_condition(pid, ckd_enc_id, ckd_date, C_CKD)
-        if random.random() < 0.15:
+        if random.random() < 0.15:  # CVD — demonstration assumption
             cvd_date = self._jitter(t2dm_date, 180, min(730, (index_date - t2dm_date).days))
             cvd_enc_id = self.add_encounter(pid, cvd_date, random.choice(ENC_AMBA))
             self.add_condition(pid, cvd_enc_id, cvd_date, C_CVD)
@@ -362,6 +381,8 @@ class _Generator:
                 reason_desc=C_CVD[1],
             )
 
+        # 25% baseline ED probability — demonstration assumption to populate
+        # the baseline ED covariate; not an epidemiological estimate.
         if random.random() < 0.25:
             for _ in range(random.randint(1, 2)):
                 bl_span = (index_date - t2dm_date).days
@@ -400,11 +421,16 @@ class _Generator:
                 self.add_encounter(pid, fu_visit, random.choice(ENC_AMBA))
             fu_visit += timedelta(days=90)
 
+        # 35% follow-up ED probability — a demonstration target chosen to produce
+        # a non-trivial outcome rate and a non-degenerate regression.  This is
+        # NOT an epidemiological estimate of ED utilisation in GLP-1-treated
+        # T2DM patients.  Do not present this rate as an expected or valid result.
         if random.random() < 0.35:
             n_ed = random.choices([1, 2, 3, 4], weights=[0.6, 0.25, 0.10, 0.05])[0]
             for _ in range(n_ed):
                 ed_days = random.randint(1, min(fu_days, 540))
                 self.add_encounter(pid, index_date + timedelta(days=ed_days), ENC_ED)
+        # 12% inpatient probability — demonstration assumption, not an estimate.
         if random.random() < 0.12:
             ip_days = random.randint(1, min(fu_days, 540))
             self.add_encounter(pid, index_date + timedelta(days=ip_days), ENC_IP)

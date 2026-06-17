@@ -28,7 +28,7 @@ def show() -> None:
     st.title("Results")
     show_disclaimer()
     st.caption(
-        "All figures are derived from Synthea-generated synthetic records. "
+        "All figures are derived from synthetic records. "
         "They do not represent real clinical incidence, effectiveness, or risk."
     )
 
@@ -130,7 +130,7 @@ def _render_subgroups(conn) -> None:
     st.subheader("Subgroup comparisons")
     st.caption(
         "Unadjusted ED event rates by subgroup. "
-        "Differences may reflect Synthea simulation patterns rather than real associations."
+        "Differences reflect simulation patterns and do not represent real clinical associations."
     )
 
     label = st.selectbox("Stratify by", list(_SUBGROUP_OPTIONS.keys()))

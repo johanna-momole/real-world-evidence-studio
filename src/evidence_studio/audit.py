@@ -88,14 +88,16 @@ _AUDIT_MIGRATIONS = [
     (
         "audit.data_manifest",
         "data_source",
+        # DuckDB ALTER TABLE ADD COLUMN does not support NOT NULL; omit it here.
+        # The DDL for new tables includes NOT NULL; legacy tables default to the unknown value.
         "ALTER TABLE audit.data_manifest "
-        "ADD COLUMN data_source VARCHAR NOT NULL DEFAULT 'unknown_synthetic_source'",
+        "ADD COLUMN data_source VARCHAR DEFAULT 'unknown_synthetic_source'",
     ),
     (
         "audit.study_runs",
         "data_source",
         "ALTER TABLE audit.study_runs "
-        "ADD COLUMN data_source VARCHAR NOT NULL DEFAULT 'unknown_synthetic_source'",
+        "ADD COLUMN data_source VARCHAR DEFAULT 'unknown_synthetic_source'",
     ),
     # Rename legacy synthea_dir column to data_dir (best-effort — ignored if absent)
     (

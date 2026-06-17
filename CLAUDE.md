@@ -7,7 +7,8 @@ This file governs how Claude Code assists with this project. Read it before modi
 ## Project identity
 
 **Real-World Evidence Studio** is a local Streamlit application that demonstrates
-transparent real-world evidence (RWE) generation using synthetic Synthea EHR data.
+transparent real-world evidence (RWE) generation using synthetic EHR data in
+Synthea-compatible format.
 
 Primary clinical question:
 
@@ -28,7 +29,7 @@ disclaimer.
 |-------|-----------|
 | Language | Python 3.11 or newer |
 | Analytical DB | DuckDB (in-process, file-backed) |
-| Source data | Synthea CSV files |
+| Source data | Synthea-compatible CSV files (official Synthea or custom demo generator) |
 | Query language | SQL (primary logic layer) |
 | Dataframes | Pandas or Polars only where SQL is not appropriate |
 | App framework | Streamlit with `st.Page` and `st.navigation` |
@@ -175,10 +176,26 @@ Do not skip step 1. Do not fabricate file contents from memory.
 
 ---
 
+## Data sources
+
+Two data modes are supported. Both use the same ingestion pipeline.
+
+**Official Synthea (preferred):** `evidence-studio ingest --data-source official_synthea`
+**Custom demo generator (no Java):** `python scripts/generate_demo_data.py` then
+`evidence-studio ingest --data-source custom_synthetic_demo`
+
+The custom generator uses hard-coded demonstration probabilities and does NOT
+reproduce Synthea's disease modules, clinical logic, prevalence, incidence,
+utilization, prescribing, or outcome distributions. Data-quality checks confirm
+structural consistency only — not clinical realism. Demo metrics (cohort sizes,
+ED rates, regression coefficients) are not scientific findings.
+
+---
+
 ## Disclaimer (must appear on every generated output)
 
 > **Synthetic data only.** All results in this application are derived from
-> Synthea-generated synthetic records. They do not represent real patients,
-> clinical outcomes, treatment effectiveness, drug safety, or incidence rates.
-> This project must not be used for clinical decisions, regulatory submissions,
-> or public health reporting.
+> synthetic records. They do not represent real patients, clinical outcomes,
+> treatment effectiveness, drug safety, or incidence rates. This project must
+> not be used for clinical decisions, regulatory submissions, or public health
+> reporting.
