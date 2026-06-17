@@ -10,9 +10,23 @@ import duckdb
 import markdown as md
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+from evidence_studio.audit import (
+    DATA_SOURCE_CUSTOM_DEMO,
+    DATA_SOURCE_OFFICIAL_SYNTHEA,
+    DATA_SOURCE_UNKNOWN,
+)
 from evidence_studio.database import run_query, table_exists
 
 logger = logging.getLogger(__name__)
+
+
+def _data_source_label(data_source: str) -> str:
+    if data_source == DATA_SOURCE_OFFICIAL_SYNTHEA:
+        return "Official Synthea synthetic EHR data"
+    if data_source == DATA_SOURCE_CUSTOM_DEMO:
+        return "Custom synthetic demo data (locally generated)"
+    return "Synthetic data (source unverified)"
+
 
 _TEMPLATES_DIR = Path(__file__).resolve().parents[2] / "templates"
 
@@ -64,12 +78,9 @@ def _build_context(conn: duckdb.DuckDBPyConnection, run_id: str) -> dict:
         "run_id": run_id,
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         "app_version": evidence_studio.__version__,
-        "disclaimer": (
-            "All results are derived from Synthea-generated synthetic records. "
-            "They do not represent real patients, clinical outcomes, treatment "
-            "effectiveness, drug safety, or incidence rates. This document must not "
-            "be used for clinical decisions, regulatory submissions, or public health reporting."
-        ),
+        "data_source": DATA_SOURCE_UNKNOWN,
+        "data_source_label": _data_source_label(DATA_SOURCE_UNKNOWN),
+        "disclaimer": "",  # set after data_source is resolved
         "n_enrolled": 0,
         "n_outcomes": 0,
         "outcome_rate": "0.0",
@@ -86,6 +97,14 @@ def _build_context(conn: duckdb.DuckDBPyConnection, run_id: str) -> dict:
 
     _load_run_config(conn, run_id, ctx)
     _load_manifest(conn, ctx)
+
+    # Build disclaimer from resolved data source
+    ctx["disclaimer"] = (
+        f"All results are derived from {ctx['data_source_label'].lower()} records. "
+        "They do not represent real patients, clinical outcomes, treatment "
+        "effectiveness, drug safety, or incidence rates. This document must not "
+        "be used for clinical decisions, regulatory submissions, or public health reporting."
+    )
 
     if not table_exists(conn, "analytics", "analysis_dataset"):
         ctx["warnings"].append(
@@ -165,6 +184,9 @@ def _load_run_config(conn: duckdb.DuckDBPyConnection, run_id: str, ctx: dict) ->
         ctx["n_enrolled"] = int(row["n_enrolled"])
     if row.get("n_with_outcome") is not None:
         ctx["n_outcomes"] = int(row["n_with_outcome"])
+    ds = str(row.get("data_source") or DATA_SOURCE_UNKNOWN)
+    ctx["data_source"] = ds
+    ctx["data_source_label"] = _data_source_label(ds)
 
 
 def _load_manifest(conn: duckdb.DuckDBPyConnection, ctx: dict) -> None:
@@ -173,7 +195,7 @@ def _load_manifest(conn: duckdb.DuckDBPyConnection, ctx: dict) -> None:
         return
     df = run_query(
         conn,
-        "SELECT file_name, row_count, sha256_hash FROM audit.data_manifest "
+        "SELECT file_name, row_count, sha256_hash, data_source FROM audit.data_manifest "
         "ORDER BY load_timestamp DESC",
     )
     if not df.empty:

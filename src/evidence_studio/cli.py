@@ -21,7 +21,7 @@ def cli(log_level: str) -> None:
     "--data-dir",
     default=None,
     type=click.Path(path_type=Path),
-    help="Directory containing Synthea CSV files (overrides SYNTHEA_DATA_DIR).",
+    help="Directory containing source CSV files (overrides SYNTHEA_DATA_DIR).",
 )
 @click.option(
     "--db-path",
@@ -29,14 +29,30 @@ def cli(log_level: str) -> None:
     type=click.Path(path_type=Path),
     help="Path to DuckDB file (overrides DB_PATH).",
 )
-def ingest(data_dir: Path | None, db_path: Path | None) -> None:
-    """Load Synthea CSV files into the raw and standardized DuckDB schemas."""
+@click.option(
+    "--data-source",
+    "data_source",
+    default="unknown_synthetic_source",
+    type=click.Choice(
+        ["official_synthea", "custom_synthetic_demo", "unknown_synthetic_source"],
+        case_sensitive=True,
+    ),
+    help=(
+        "Origin of the CSV files stored in the audit manifest. "
+        "Use 'official_synthea' for files from the Synthea Java tool, "
+        "'custom_synthetic_demo' for locally-generated synthetic data, "
+        "or leave as 'unknown_synthetic_source' (default)."
+    ),
+)
+def ingest(data_dir: Path | None, db_path: Path | None, data_source: str) -> None:
+    """Load CSV files into the raw and standardized DuckDB schemas."""
     cfg = AppConfig()
     data_dir = (data_dir or cfg.resolved_synthea_dir).resolve()
     db_path = (db_path or cfg.resolved_db_path).resolve()
 
     click.echo(f"Data directory : {data_dir}")
     click.echo(f"Database       : {db_path}")
+    click.echo(f"Data source    : {data_source}")
 
     from evidence_studio.audit import ensure_audit_schema
     from evidence_studio.database import get_connection
@@ -47,7 +63,7 @@ def ingest(data_dir: Path | None, db_path: Path | None) -> None:
     ensure_audit_schema(conn)
 
     click.echo("Loading source files into raw schema…")
-    row_counts = _ingest(conn, data_dir)
+    row_counts = _ingest(conn, data_dir, data_source=data_source)
     for name, n in row_counts.items():
         click.echo(f"  {name}: {n:,} rows")
 

@@ -11,6 +11,11 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+# Valid data-source identifiers stored in audit tables.
+DATA_SOURCE_OFFICIAL_SYNTHEA = "official_synthea"
+DATA_SOURCE_CUSTOM_DEMO = "custom_synthetic_demo"
+DATA_SOURCE_UNKNOWN = "unknown_synthetic_source"
+
 _AUDIT_DDL = """
 CREATE SEQUENCE IF NOT EXISTS audit.manifest_seq START 1;
 CREATE SEQUENCE IF NOT EXISTS audit.dq_seq START 1;
@@ -23,6 +28,7 @@ CREATE TABLE IF NOT EXISTS audit.data_manifest (
     row_count       BIGINT,
     column_count    INTEGER,
     sha256_hash     VARCHAR,
+    data_source     VARCHAR NOT NULL DEFAULT 'unknown_synthetic_source',
     load_timestamp  TIMESTAMP NOT NULL DEFAULT now()
 );
 
@@ -39,8 +45,9 @@ CREATE TABLE IF NOT EXISTS audit.study_runs (
     run_id          VARCHAR PRIMARY KEY,
     run_timestamp   TIMESTAMP NOT NULL DEFAULT now(),
     config_json     VARCHAR,
-    synthea_dir     VARCHAR,
+    data_dir        VARCHAR,
     db_path         VARCHAR,
+    data_source     VARCHAR NOT NULL DEFAULT 'unknown_synthetic_source',
     n_enrolled      INTEGER,
     n_with_outcome  INTEGER
 );
@@ -76,10 +83,49 @@ CREATE TABLE IF NOT EXISTS audit.assumption_log (
 CREATE SEQUENCE IF NOT EXISTS audit.assumption_seq START 1;
 """
 
+# Migration: add new columns to tables that may pre-date this schema version.
+_AUDIT_MIGRATIONS = [
+    (
+        "audit.data_manifest",
+        "data_source",
+        "ALTER TABLE audit.data_manifest "
+        "ADD COLUMN data_source VARCHAR NOT NULL DEFAULT 'unknown_synthetic_source'",
+    ),
+    (
+        "audit.study_runs",
+        "data_source",
+        "ALTER TABLE audit.study_runs "
+        "ADD COLUMN data_source VARCHAR NOT NULL DEFAULT 'unknown_synthetic_source'",
+    ),
+    # Rename legacy synthea_dir column to data_dir (best-effort — ignored if absent)
+    (
+        "audit.study_runs",
+        "data_dir",
+        "ALTER TABLE audit.study_runs ADD COLUMN data_dir VARCHAR",
+    ),
+]
+
 
 def ensure_audit_schema(conn: duckdb.DuckDBPyConnection) -> None:
-    """Create all audit tables and sequences if they do not exist."""
+    """Create all audit tables and sequences, then apply any pending migrations."""
     conn.execute(_AUDIT_DDL)
+    _apply_migrations(conn)
+
+
+def _apply_migrations(conn: duckdb.DuckDBPyConnection) -> None:
+    """Add any columns that are missing from pre-existing tables."""
+    for table_fq, column, sql in _AUDIT_MIGRATIONS:
+        schema, table = table_fq.split(".")
+        exists = conn.execute(
+            "SELECT count(*) FROM information_schema.columns "
+            "WHERE table_schema = ? AND table_name = ? AND column_name = ?",
+            [schema, table, column],
+        ).fetchone()[0]
+        if not exists:
+            try:
+                conn.execute(sql)
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("Migration skipped (%s.%s): %s", table_fq, column, exc)
 
 
 def log_assumption(
@@ -113,17 +159,26 @@ def record_study_run(
     conn: duckdb.DuckDBPyConnection,
     run_id: str,
     config_dict: dict,
-    synthea_dir: str,
-    db_path: str,
+    data_dir: str = "",
+    db_path: str = "",
+    data_source: str = DATA_SOURCE_UNKNOWN,
     n_enrolled: int = 0,
     n_with_outcome: int = 0,
 ) -> None:
     """Insert or replace a study run record."""
     conn.execute(
         "INSERT OR REPLACE INTO audit.study_runs "
-        "(run_id, run_timestamp, config_json, synthea_dir, db_path, n_enrolled, n_with_outcome) "
-        "VALUES (?, now(), ?, ?, ?, ?, ?)",
-        [run_id, json.dumps(config_dict), synthea_dir, db_path, n_enrolled, n_with_outcome],
+        "(run_id, run_timestamp, config_json, data_dir, db_path, data_source, n_enrolled, n_with_outcome) "
+        "VALUES (?, now(), ?, ?, ?, ?, ?, ?)",
+        [
+            run_id,
+            json.dumps(config_dict),
+            data_dir,
+            db_path,
+            data_source,
+            n_enrolled,
+            n_with_outcome,
+        ],
     )
 
 
@@ -157,6 +212,6 @@ def get_run_history(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
         return pd.DataFrame()
     return run_query(
         conn,
-        "SELECT run_id, run_timestamp, n_enrolled, n_with_outcome "
+        "SELECT run_id, run_timestamp, data_source, n_enrolled, n_with_outcome "
         "FROM audit.study_runs ORDER BY run_timestamp DESC LIMIT 20",
     )

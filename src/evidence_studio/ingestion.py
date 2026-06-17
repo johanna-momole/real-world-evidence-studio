@@ -1,4 +1,4 @@
-"""Synthea CSV ingestion — load source files into the raw DuckDB schema."""
+"""CSV ingestion — load source files into the raw DuckDB schema."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 
 import duckdb
 
-from evidence_studio.audit import ensure_audit_schema, log_assumption
+from evidence_studio.audit import DATA_SOURCE_UNKNOWN, ensure_audit_schema, log_assumption
 from evidence_studio.database import execute_sql, run_query
 
 logger = logging.getLogger(__name__)
@@ -37,8 +37,14 @@ def ingest(
     data_dir: Path,
     *,
     required_only: bool = False,
+    data_source: str = DATA_SOURCE_UNKNOWN,
 ) -> dict[str, int]:
-    """Load all discovered Synthea CSV files into the raw schema.
+    """Load all discovered CSV files into the raw schema.
+
+    ``data_source`` is stored in the audit manifest for every loaded file.
+    Use one of the constants from :mod:`evidence_studio.audit`:
+    ``DATA_SOURCE_OFFICIAL_SYNTHEA``, ``DATA_SOURCE_CUSTOM_DEMO``, or
+    ``DATA_SOURCE_UNKNOWN`` (default).
 
     Returns a mapping of table name to row count for every file loaded.
     """
@@ -65,7 +71,7 @@ def ingest(
                     continue
                 n_rows = _load_table(conn, name, csv_path)
                 row_counts[name] = n_rows
-                _record_manifest(conn, name, csv_path, n_rows)
+                _record_manifest(conn, name, csv_path, n_rows, data_source)
             cursor.execute("COMMIT")
         except Exception:
             cursor.execute("ROLLBACK")
@@ -74,6 +80,7 @@ def ingest(
     log_assumption(
         conn,
         f"Loaded {len(row_counts)} tables from {data_dir}. "
+        f"data_source={data_source!r}. "
         "Source files were not modified; raw schema reflects exact CSV contents.",
         context="ingestion",
     )
@@ -85,7 +92,7 @@ def _check_required_files(data_dir: Path) -> None:
     missing = [f for f in REQUIRED_FILES if not (data_dir / f"{f}.csv").exists()]
     if missing:
         raise IngestionError(
-            f"Missing required Synthea files: {', '.join(missing)}. Expected them in: {data_dir}"
+            f"Missing required CSV files: {', '.join(missing)}. Expected them in: {data_dir}"
         )
 
 
@@ -125,6 +132,7 @@ def _record_manifest(
     table_name: str,
     csv_path: Path,
     row_count: int,
+    data_source: str = DATA_SOURCE_UNKNOWN,
 ) -> None:
     """Upsert a manifest entry for a loaded file."""
     col_df = run_query(conn, f"DESCRIBE raw.{table_name}")
@@ -134,9 +142,9 @@ def _record_manifest(
 
     conn.execute(
         "INSERT INTO audit.data_manifest "
-        "(manifest_id, file_name, file_path, file_size_bytes, row_count, column_count, sha256_hash) "
-        "VALUES (nextval('audit.manifest_seq'), ?, ?, ?, ?, ?, ?)",
-        [csv_path.name, str(csv_path), file_size, row_count, n_cols, sha],
+        "(manifest_id, file_name, file_path, file_size_bytes, row_count, column_count, sha256_hash, data_source) "
+        "VALUES (nextval('audit.manifest_seq'), ?, ?, ?, ?, ?, ?, ?)",
+        [csv_path.name, str(csv_path), file_size, row_count, n_cols, sha, data_source],
     )
 
 

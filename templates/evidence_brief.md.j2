@@ -15,7 +15,7 @@
 **Real-World Evidence Studio — GLP-1 and Emergency Department Utilization**
 
 This document summarises a retrospective new-user cohort study applied to
-Synthea-generated synthetic EHR data. It is a portfolio and educational project.
+{{ data_source_label }}. It is a portfolio and educational project.
 No finding represents real-world clinical evidence.
 
 ---
@@ -30,7 +30,8 @@ No finding represents real-world clinical evidence.
 
 ## 3. Data Source
 
-- **Source:** Synthea open-source synthetic patient generator
+- **Source:** {{ data_source_label }}
+- **Data source identifier:** `{{ data_source }}`
 - **Format:** CSV files ingested into a DuckDB analytical database
 - **Schema layers:** raw → standardized → analytics → audit
 - **Files loaded:**
@@ -48,10 +49,7 @@ No finding represents real-world clinical evidence.
 
 ## 4. Synthetic Data Disclaimer
 
-> **Synthetic data only.** All results are derived from Synthea-generated
-> records. They do not represent real patients, clinical outcomes, treatment
-> effectiveness, drug safety, or incidence rates. This document must not be
-> used for clinical decisions, regulatory submissions, or public health reporting.
+> **Synthetic data only.** {{ disclaimer }}
 
 ---
 
@@ -60,7 +58,7 @@ No finding represents real-world clinical evidence.
 - **Design type:** Retrospective new-user cohort
 - **Observation type:** Associational; no causal inference is claimed
 - **Population:** Synthetic adult patients with type 2 diabetes initiating a GLP-1 receptor agonist
-- **Setting:** Synthea-generated EHR records (not claims data)
+- **Setting:** {{ data_source_label }} (not claims data)
 
 ---
 
@@ -113,7 +111,7 @@ is used as the index event.
 - exenatide
 - tirzepatide
 
-Matching is case-insensitive substring search against Synthea medication
+Matching is case-insensitive substring search against source medication
 description fields. This approach is not equivalent to validated phenotyping
 with an official vocabulary.
 
@@ -125,7 +123,7 @@ with an official vocabulary.
 {{ config.get('follow_up_days', 180) }}-day follow-up window.
 
 ED encounters are identified by `encounter_class = 'emergency'` in the
-standardized encounters table. This classification is derived from Synthea's
+standardized encounters table. This classification is derived from the
 simulation model and does not correspond to a validated CMS site-of-service
 definition.
 
@@ -252,7 +250,7 @@ Baseline covariates are derived from data strictly **before** the index date
 {% endfor %}
 
 > Odds ratios are associative and **non-causal**. They reflect patterns in
-> Synthea's simulation model, not real-world pharmacoepidemiology.
+> the simulation model, not real-world pharmacoepidemiology.
 {% else %}
 *Regression results not available. See warnings above.*
 {% endif %}
@@ -279,11 +277,11 @@ Complete-case logistic regression excludes all patients with any missing covaria
 The following statements apply to synthetic data only:
 
 - The enrolled cohort comprises {{ n_enrolled }} synthetic adult patients with
-  type 2 diabetes who initiated a GLP-1 receptor agonist in the Synthea simulation.
+  type 2 diabetes who initiated a GLP-1 receptor agonist in the simulation.
 - {{ n_outcomes }} patients ({{ outcome_rate }}%) experienced at least one ED
   encounter during the {{ config.get('follow_up_days', 180) }}-day follow-up window.
-- Baseline characteristics reflect Synthea's disease simulation model.
-- Observed associations between covariates and ED utilization reflect the simulation
+- Baseline characteristics reflect the simulation model.
+- Observed associations between covariates and ED utilization reflect simulation
   logic rather than real clinical relationships.
 
 **No causal or clinical interpretation of these findings is appropriate.**
@@ -292,7 +290,7 @@ The following statements apply to synthetic data only:
 
 ## 19. Limitations
 
-1. **Synthetic data.** Synthea contains simulated rather than observed patient records.
+1. **Synthetic data.** {{ data_source_label }} contains simulated rather than observed patient records.
 2. **No real clinical finding.** Findings do not estimate real clinical incidence,
    prevalence, effectiveness, or safety.
 3. **Concept-set validity.** Clinical concept sets are based on source-code or
@@ -306,7 +304,7 @@ The following statements apply to synthetic data only:
 8. **Small synthetic subgroups.** Small subgroups may produce unstable estimates.
 9. **OMOP layer.** The partial OMOP-aligned layer is not a validated full OMOP CDM
    conversion. All concept IDs are 0 (unmapped).
-10. **Single simulation run.** Results vary across Synthea random seeds.
+10. **Single simulation run.** Results vary across simulation random seeds.
 
 ---
 
@@ -317,6 +315,7 @@ The following statements apply to synthetic data only:
 | Study run ID | `{{ run_id }}` |
 | Generated at (UTC) | {{ generated_at }} |
 | Application version | {{ app_version }} |
+| Data source | {{ data_source_label }} (`{{ data_source }}`) |
 | Follow-up days | {{ config.get('follow_up_days', '—') }} |
 | Baseline days | {{ config.get('baseline_days', '—') }} |
 | Min age at index | {{ config.get('min_age_at_index', '—') }} |

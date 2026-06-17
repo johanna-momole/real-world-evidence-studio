@@ -16,8 +16,8 @@ def show() -> None:
     st.markdown(
         """
         **Real-World Evidence Studio** demonstrates transparent RWE generation
-        using synthetic [Synthea](https://github.com/synthetichealth/synthea) EHR data.
-        This is a portfolio and educational project only — all patient records are
+        using synthetic EHR data in [Synthea](https://github.com/synthetichealth/synthea)-compatible
+        CSV format. This is a portfolio and educational project only — all patient records are
         synthetic and results must not be used for any clinical purpose.
 
         **Primary clinical question**
@@ -63,7 +63,7 @@ def _render_data_flow() -> None:
     st.markdown(
         """
         ```
-        Synthea CSVs  →  raw schema  →  standardized schema
+        Source CSVs  →  raw schema  →  standardized schema
                                                ↓
                                      Concept matching (GLP-1 drugs, T2DM)
                                                ↓
@@ -88,7 +88,7 @@ def _render_data_status(config: AppConfig) -> None:
 
     if all_present:
         st.success(
-            f"All required Synthea files found in `{config.synthea_data_dir}`.",
+            f"All required source files found in `{config.synthea_data_dir}`.",
             icon="✅",
         )
     else:
@@ -116,7 +116,7 @@ def _render_data_status(config: AppConfig) -> None:
     st.divider()
     st.subheader("Quick start")
     st.code(
-        "# 1. Generate Synthea data (see docs/data_setup.md)\n"
+        "# 1. Prepare source data (see docs/data_setup.md)\n"
         "# 2. Ingest into DuckDB\n"
         "evidence-studio ingest --data-dir data/raw\n\n"
         "# 3. Build the cohort\n"
@@ -145,7 +145,7 @@ def _render_recent_run(config: AppConfig) -> None:
 
         df = run_query(
             conn,
-            "SELECT run_id, run_timestamp, n_enrolled, n_with_outcome "
+            "SELECT run_id, run_timestamp, data_source, n_enrolled, n_with_outcome "
             "FROM audit.study_runs ORDER BY run_timestamp DESC LIMIT 1",
         )
         if df.empty:
@@ -162,6 +162,7 @@ def _render_recent_run(config: AppConfig) -> None:
             "ED outcomes",
             int(row["n_with_outcome"]) if row["n_with_outcome"] else "—",
         )
-        st.caption(f"Full run ID: `{row['run_id']}`")
+        ds = str(row.get("data_source") or "unknown_synthetic_source")
+        st.caption(f"Full run ID: `{row['run_id']}`  |  Data source: `{ds}`")
     except Exception:
         st.caption("Could not load run history.")

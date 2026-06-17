@@ -154,7 +154,7 @@ def fit_ed_logistic_regression(conn: duckdb.DuckDBPyConnection) -> RegressionRes
     try:
         import statsmodels.formula.api as smf
 
-        formula_parts = [
+        num_candidates = [
             "age_at_index",
             "has_hypertension",
             "has_ckd",
@@ -166,12 +166,28 @@ def fit_ed_logistic_regression(conn: duckdb.DuckDBPyConnection) -> RegressionRes
             "hba1c_pct",
             "bmi_value",
         ]
+
+        # Drop zero-variance numeric predictors (cause singular design matrix)
+        formula_parts = []
+        for col in num_candidates:
+            if col in model_df.columns and model_df[col].nunique() > 1:
+                formula_parts.append(col)
+            elif col in model_df.columns:
+                result.warnings.append(
+                    f"Predictor '{col}' has zero variance and was dropped from the model."
+                )
+
         if model_df["sex"].nunique() > 1:
             formula_parts.append("C(sex)")
         if model_df["race"].nunique() > 1:
             formula_parts.append("C(race)")
         if model_df["ethnicity"].nunique() > 1:
             formula_parts.append("C(ethnicity)")
+
+        if not formula_parts:
+            result.model_not_fit = True
+            result.warnings.append("No valid predictors remain after variance check.")
+            return result
 
         formula = "any_ed_visit ~ " + " + ".join(formula_parts)
 

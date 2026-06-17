@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 import duckdb
 
 from evidence_studio.audit import (
+    DATA_SOURCE_UNKNOWN,
     ensure_audit_schema,
     log_assumption,
     log_sql,
@@ -64,7 +65,9 @@ class CohortBuilder:
                 "No patients found. Ingestion may be incomplete.",
                 context="cohort_build",
             )
-            record_study_run(self._conn, run_id, self._cfg.to_dict(), "", "", 0, 0)
+            record_study_run(
+                self._conn, run_id, self._cfg.to_dict(), data_source=self._data_source()
+            )
             return run_id
 
         sql_index = self._build_index_events()
@@ -76,11 +79,13 @@ class CohortBuilder:
             log_assumption(
                 self._conn,
                 "No GLP-1 medication records matched any concept-set term. "
-                "Cohort is empty. Check your Synthea population size and concept_sets.yml.",
+                "Cohort is empty. Check your population size and concept_sets.yml.",
                 context="cohort_build",
             )
             attrition("GLP-1 medication found", 0, n_all_patients)
-            record_study_run(self._conn, run_id, self._cfg.to_dict(), "", "", 0, 0)
+            record_study_run(
+                self._conn, run_id, self._cfg.to_dict(), data_source=self._data_source()
+            )
             return run_id
 
         attrition("GLP-1 medication found", n_with_glp1, n_all_patients - n_with_glp1)
@@ -144,13 +149,26 @@ class CohortBuilder:
             self._conn,
             run_id,
             self._cfg.to_dict(),
-            synthea_dir="",
-            db_path="",
+            data_source=self._data_source(),
             n_enrolled=n_enrolled,
         )
 
         logger.info("Cohort build complete. Run ID: %s, Enrolled: %d", run_id, n_enrolled)
         return run_id
+
+    def _data_source(self) -> str:
+        """Return the data_source stored in the manifest, or DATA_SOURCE_UNKNOWN."""
+        from evidence_studio.database import table_exists
+
+        if not table_exists(self._conn, "audit", "data_manifest"):
+            return DATA_SOURCE_UNKNOWN
+        try:
+            row = self._conn.execute(
+                "SELECT data_source FROM audit.data_manifest ORDER BY load_timestamp DESC LIMIT 1"
+            ).fetchone()
+            return str(row[0]) if row else DATA_SOURCE_UNKNOWN
+        except Exception:  # noqa: BLE001
+            return DATA_SOURCE_UNKNOWN
 
     # ── SQL builders ──────────────────────────────────────────────────────────
 
